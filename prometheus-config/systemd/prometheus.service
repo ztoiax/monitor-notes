@@ -6,14 +6,13 @@ After=network.target
 Type=simple
 User=root
 Group=root
-ExecStart=/data/prometheus/prometheus \
-          --config.file "/data/prometheus/prometheus.yml" \
-          --storage.tsdb.path "/data/prometheus/data" \
+ExecStart=/etc/prometheus/prometheus \
+          --config.file "/etc/prometheus/prometheus.yml" \
+          --storage.tsdb.path "/etc/prometheus/data" \
           --storage.tsdb.retention=15d \
-          --web.console.templates="/data/prometheus/consoles" \
-          --web.console.libraries="/data/prometheus/console_libraries" \
+          --web.console.templates="/etc/prometheus/consoles" \
+          --web.console.libraries="/etc/prometheus/console_libraries" \
           --web.max-connections=512 \
-          --web.external-url"http://192.168.24.17:9090" \
           --web.listen-address "0.0.0.0:9090"
 Restart=on-failure
 

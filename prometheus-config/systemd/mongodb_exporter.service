@@ -6,11 +6,9 @@ After=network.target
 [Service]
 Type=simple
 
-User=mongodb_exporter
-Group=nogroup
-
-EnvironmentFile=-/etc/default/mongodb_exporter
-ExecStart=/usr/bin/mongodb_exporter $OPTIONS
+ExecStart=/usr/bin/mongodb_exporter \
+ --web.listen-address=:9103 \
+ --mongodb.uri=mongodb://127.0.0.1:27017
 SyslogIdentifier=mongodb_exporter
 
 Restart=always

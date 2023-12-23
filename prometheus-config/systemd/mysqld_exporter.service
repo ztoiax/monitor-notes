@@ -7,8 +7,8 @@ Group=root
 [Service]
 Type=simple
 Restart=always
-ExecStart=/data/mysqld_exporter/mysqld_exporter \
---config.my-cnf=/data/mysqld_exporter/.mysqld_exporter.cnf \
+ExecStart=/usr/bin/prometheus-mysqld-exporter  \
+--config.my-cnf="/etc/prometheus/mysqld_exporter.cnf" \
 --collect.global_status \
 --collect.auto_increment.columns \
 --collect.info_schema.processlist \
