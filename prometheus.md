@@ -606,7 +606,43 @@ curl 'http://localhost:9090/api/v1/query?query=up&time=2015-07-01T20:10:51.781Z'
 
 ## 服务发现
 
+- 通过服务发现的方式，管理员可以在不重启Prometheus服务的情况下动态的发现需要监控的Target实例信息。
+
 ### 基于文件的服务发现
+
+- json文件中分别定义了3个采集任务，以及每个任务对应的Target列表：
+
+    ```json
+    [
+      {
+        "targets": [ "localhost:8080"],
+        "labels": {
+          "env": "localhost",
+          "job": "cadvisor"
+        }
+      },
+      {
+        "targets": [ "localhost:9104" ],
+        "labels": {
+          "env": "prod",
+          "job": "mysqld"
+        }
+      },
+      {
+        "targets": [ "localhost:9100"],
+        "labels": {
+          "env": "prod",
+          "job": "node"
+        }
+      }
+    ]
+    ```
+
+    - 并为Target实例添加了自定义标签`env`：
+        ```
+        # env="prod"
+        node_cpu_seconds_total{cpu="cpu0",env="prod",instance="localhost:9100",job="node",mode="idle"}
+        ```
 
 - 定义了一个基于`file_sd_configs`的监控采集任务，其中模式的任务名称为`file_ds`。在JSON文件中可以使用job标签覆盖默认的job名称
 
@@ -633,6 +669,8 @@ scrape_configs:
 
 ### consul
 
+- Consul是由HashiCorp开发的一个支持多数据中心的分布式服务发现和键值对存储服务的开源软件，被大量应用于基于微服务的软件架构当中。
+
 #### 服务注册
 
 - 在`consul.d`目录下创建`/node_exporter.json`文件
@@ -648,13 +686,16 @@ scrape_configs:
 ```
 
 ```sh
-## 启动consul
+# 启动consul
 consul agent -dev -config-dir=/etc/consul.d
 
-## 测试node_exporter
+# 查看当前集群中的所有节点
+consul members
+
+# 获取服务列表：
 curl http://localhost:8500/v1/catalog/service/node_exporter
 
-## 解析dns查询
+# Consul还提供了内置的DNS服务。解析dns查询
 dig @127.0.0.1 -p 8600 node_exporter.service.consul
 ```
 
@@ -686,6 +727,153 @@ dig @127.0.0.1 -p 8600 node_exporter.service.consul
 
 - 在`/etc/resolv.conf`上添加dns服务器地址`nameserver <dns服务器ip>`，然后重启prometheus
 
+### 服务发现与relabel_configs
+
+- 对于线上环境我们可能会划分为:dev, stage, prod不同的集群。每一个集群运行多个主机节点，每个服务器节点上运行一个Node Exporter实例。Node Exporter实例会自动注册到Consul中，而Prometheus则根据Consul返回的Node Exporter实例信息动态的维护Target列表，从而向这些Target轮询监控数据。
+
+    ![avatar](./Pictures/prometheus/基于Consul的服务发现.avif)
+
+    - 问题：希望Prometheus Server能够按照某些规则（比如标签）从服务发现注册中心返回的Target实例中有选择性的采集某些Exporter实例的监控数据。
+        - 按照不同的环境dev, stage, prod聚合监控数据？
+        - 对于研发团队而言，我可能只关心dev环境的监控数据，如何处理？
+        - 如果为每一个团队单独搭建一个Prometheus Server。那么如何让不同团队的Prometheus Server采集不同的环境监控数据？
+
+    - 解决方法：Prometheus采集的样本数据中都会包含一个名为`instance`的标签，该标签的内容对应到Target实例的`__address__`。这里实际上是发生了一次标签的重写处理。
+
+        - 这种发生在采集样本数据之前，对Target实例的标签进行重写的机制在Prometheus被称为Relabeling。
+
+
+- 在Prometheus所有的Target实例中，都包含一些默认的Metadata标签信息。下面图片中的`Discovered labels:`便是Metadata
+![avatar](./Pictures/prometheus/Target-Metadata.avif)
+
+- 除了这些默认的标签以外，还可以自定义Target的标签
+
+    - 在[基于文件的服务发现](#基于文件的服务发现)一节中，就为Target实例添加了自定义标签`env`：
+        ```promql
+        # env="prod"
+        node_cpu_seconds_total{cpu="cpu0",env="prod",instance="localhost:9100",job="node",mode="idle"}
+        ```
+
+- Relabeling最基本的应用场景就是基于Target实例中包含的metadata标签，动态的添加或者覆盖标签
+
+    ```promql
+    # 在默认情况下，从Node Exporter实例采集上来的样本数据如下所示：
+    node_cpu_seconds_total{cpu="cpu0",instance="localhost:9100",job="node",mode="idle"} 93970.8203125
+
+    # 我们希望能有一个额外的标签dc可以表示该样本所属的数据中心：
+    node_cpu_seconds_total{cpu="cpu0",instance="localhost:9100",job="node",mode="idle", dc="dc1"} 93970.8203125
+    ```
+
+    - 一个最简单的`relabel_config`配置：添加dc便签
+    ```yml
+    scrape_configs:
+      - job_name: node_exporter
+        consul_sd_configs:
+          - server: localhost:8500
+            services:
+              - node_exporter
+        relabel_configs:
+        - source_labels:  ["__meta_consul_dc"]
+          target_label: "dc"
+    ```
+
+- 完整的`relabel_config`配置
+    ```yml
+    # The source labels select values from existing labels. Their content is concatenated
+    # using the configured separator and matched against the configured regular expression
+    # for the replace, keep, and drop actions.
+    [ source_labels: '[' <labelname> [, ...] ']' ]
+
+    # Separator placed between concatenated source label values.
+    [ separator: <string> | default = ; ]
+
+    # Label to which the resulting value is written in a replace action.
+    # It is mandatory for replace actions. Regex capture groups are available.
+    [ target_label: <labelname> ]
+
+    # Regular expression against which the extracted value is matched.
+    [ regex: <regex> | default = (.*) ]
+
+    # Modulus to take of the hash of the source label values.
+    [ modulus: <uint64> ]
+
+    # Replacement value against which a regex replace is performed if the
+    # regular expression matches. Regex capture groups are available.
+    [ replacement: <string> | default = $1 ]
+
+    # Action to perform based on regex matching.
+    [ action: <relabel_action> | default = replace ]
+    ```
+
+    - `action`定义了当前relabel_config对Metadata标签的处理方式
+
+        - `replace`（默认值）：会根据regex的配置匹配`source_labels`标签的值（多个`source_label`的值会按照separator进行拼接），并且将匹配到的值写入到`target_label`当中
+            - 如果有多个匹配组，则可以使用${1}, ${2}确定写入的内容。如果没匹配到任何内容则不对`target_label`进行重新。
+
+        - `labelmap`：与replace不同的是，labelmap会根据regex的定义去匹配Target实例所有标签的名称，并且以匹配到的内容为新的标签名称，其值作为新标签的值。
+
+            - 例子：监控Kubernetes下所有的主机节点时，为将这些节点上定义的标签写入到样本中时，可以使用如下relabel_config配置：
+
+                ```yml
+                - job_name: 'kubernetes-nodes'
+                  kubernetes_sd_configs:
+                  - role: node
+                  relabel_configs:
+                  - action: labelmap
+                    regex: __meta_kubernetes_node_label_(.+)
+                ```
+
+        - `labelkeep`或者`labeldrop`：对Target标签进行过滤
+
+            - `labelkeep`：仅保留符合过滤条件的标签
+                ```yml
+                relabel_configs:
+                  - regex: label_should_drop_(.+)
+                    action: labeldrop
+                ```
+
+            - `labeldrop`：移除那些不匹配regex定义的所有标签
+
+        - `keep`和`drop`：过滤Target实例。可以简单理解为keep用于选择，而drop用于排除。
+
+            - `keep`：Prometheus会丢弃`source_labels`的值中没有匹配到regex正则表达式内容的Target实例
+            - `drop`：则会丢弃那些`source_labels`的值匹配到regex正则表达式内容的Target实例。
+
+            - 应用场景：不同职能（开发、测试、运维）的人员可能只关心其中一部分的监控数据，他们可能各自部署的自己的Prometheus Server用于监控自己关心的指标数据，如果让这些Prometheus Server采集所有环境中的所有Exporter数据显然会存在大量的资源浪费。（本节开头提到的问题）
+
+            - 例子：只希望采集数据中心dc1中的Node Exporter实例的样本数据
+                ```yml
+                scrape_configs:
+                  - job_name: node_exporter
+                    consul_sd_configs:
+                      - server: localhost:8500
+                        services:
+                          - node_exporter
+                    relabel_configs:
+                    - source_labels:  ["__meta_consul_dc"]
+                      regex: "dc1"
+                      action: keep
+                ```
+
+- 使用hashmod计算`source_labels`的Hash值
+
+    - 当relabel_config设置为hashmod时，Prometheus会根据modulus的值作为系数，计算source_labels值的hash值。
+
+        ```yml
+        scrape_configs
+        - job_name: 'file_ds'
+          relabel_configs:
+            - source_labels: [__address__]
+              modulus:       4
+              target_label:  tmp_hash
+              action:        hashmod
+          file_sd_configs:
+          - files:
+            - targets.json
+        ```
+
+    - 当前Target实例`__address__`的值以4作为系数，这样每个Target实例都会包含一个新的标签tmp_hash，并且该值的范围在1~4之间
+
 ## 可视化
 
 ### Console Template
@@ -705,16 +893,16 @@ dig @127.0.0.1 -p 8600 node_exporter.service.consul
     - 安装插件后需要重启grafana
 
 ```sh
-## 安装饼图
+# 安装饼图
 grafana cli plugins install grafana-piechart-panel
 
-## 安装gantt图
+# 安装gantt图
 grafana cli plugins install marcusolsson-gantt-panel
 
-## mongodb Data Source
+# mongodb Data Source
 grafana cli plugins install grafana-mongodb-datasource
 
-## redis Data Source
+# redis Data Source
 grafana cli plugins install redis-datasource
 ```
 
@@ -1047,7 +1235,7 @@ receivers:
         send_resolved: true
 ```
 
-##### 企业微信
+##### 企业微信（失败）
 
 - 1.进入企业微信[官网](https://work.weixin.qq.com/)
 - 2.登陆后。创建应用，并选择部门。
