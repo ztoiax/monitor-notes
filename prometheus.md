@@ -1,3 +1,65 @@
+<!-- vim-markdown-toc GFM -->
+
+* [Prometheus](#prometheus)
+    * [exporter](#exporter)
+        * [systemd](#systemd)
+        * [node_exporter监控主机信息](#node_exporter监控主机信息)
+        * [redis](#redis)
+        * [mongodb](#mongodb)
+        * [mysql](#mysql)
+        * [nginx](#nginx)
+            * [nginx-prometheus-exporter](#nginx-prometheus-exporter)
+            * [nginx-vts-exporter](#nginx-vts-exporter)
+        * [nvidia](#nvidia)
+        * [github](#github)
+        * [android](#android)
+        * [cadvisor：docker监控](#cadvisordocker监控)
+        * [blackbox_exporter](#blackbox_exporter)
+            * [prometheus集成blackbox_exporter](#prometheus集成blackbox_exporter)
+    * [PromQL](#promql)
+        * [各种方法](#各种方法)
+        * [metrics（指标）类型](#metrics指标类型)
+        * [各种操作符](#各种操作符)
+            * [通过curl在HTTP中使用PromQL](#通过curl在http中使用promql)
+        * [Recoding Rules](#recoding-rules)
+    * [服务发现](#服务发现)
+        * [基于文件的服务发现](#基于文件的服务发现)
+        * [consul](#consul)
+            * [服务注册](#服务注册)
+            * [集成prometheus](#集成prometheus)
+        * [基于dns服务发现](#基于dns服务发现)
+        * [服务发现与relabel_configs](#服务发现与relabel_configs)
+    * [可视化](#可视化)
+        * [Console Template](#console-template)
+        * [Grafana](#grafana)
+            * [dashboard](#dashboard)
+    * [alertmanager告警](#alertmanager告警)
+        * [告警](#告警)
+        * [alertmanager配置文件](#alertmanager配置文件)
+            * [route（路由规则）](#route路由规则)
+            * [receivers（告警接收器）](#receivers告警接收器)
+                * [PrometheusAlert：可以接入alertmanager的国内告警系统](#prometheusalert可以接入alertmanager的国内告警系统)
+                * [gmail邮箱](#gmail邮箱)
+                * [企业微信（失败）](#企业微信失败)
+                * [钉钉dingtalk](#钉钉dingtalk)
+                * [Slack](#slack)
+            * [inhibit_rules](#inhibit_rules)
+            * [silences（临时静默）](#silences临时静默)
+            * [告警模板](#告警模板)
+    * [集群](#集群)
+        * [联邦集群](#联邦集群)
+        * [通过goreman实现集群](#通过goreman实现集群)
+            * [alertmanager](#alertmanager)
+            * [prometheus](#prometheus-1)
+    * [日志监控系统](#日志监控系统)
+        * [mtail](#mtail)
+    * [存储](#存储)
+        * [远程存储](#远程存储)
+    * [prophet：时序数据预测的 Python 库](#prophet时序数据预测的-python-库)
+* [reference](#reference)
+
+<!-- vim-markdown-toc -->
+
 # Prometheus
 
 - [Monitoring Linux Network Stack](http://arthurchiao.art/blog/monitoring-network-stack/)
@@ -194,14 +256,34 @@ mysqld-exporter --config.my-cnf="./mysqld_exporter.cnf"
 - [nginx-lua-prometheus](https://github.com/knyar/nginx-lua-prometheus)
 
 #### [nginx-prometheus-exporter](https://github.com/nginxinc/nginx-prometheus-exporter)
-```sh
-nginx-prometheus-exporter --nginx.scrape-uri=http://127.0.0.1:8080/stub_status
 
+- nginx.conf配置：需要开启stub_status
+
+    ```sh
+    http {
+        server {
+            listen       80;
+            server_name example.com www.example.com localhost;
+
+            # stub_status模块
+            location = /basic_status {
+                stub_status;
+
+                # 只允许本机访问
+                allow 127.0.0.1;
+        	    deny all;
+            }
+    }
+    ```
+
+```sh
+# 启动nginx-prometheus-exporter
+nginx-prometheus-exporter --nginx.scrape-uri="http://127.0.0.1:80/basic_status"
 ```
 
 #### [nginx-vts-exporter](https://github.com/hnlq715/nginx-vts-exporter)
 
-- 需要先安装[nginx-module-vts](https://github.com/vozlt/nginx-module-vts)
+- 需要先安装[nginx-module-vts](https://github.com/vozlt/nginx-module-vts)nginx模块
     ```nginx
     http {
         vhost_traffic_status_zone;
@@ -883,6 +965,8 @@ dig @127.0.0.1 -p 8600 node_exporter.service.consul
 - Prometheus内置了一个简单的解决方案，它允许用户通过Go模板语言创建任意的控制台界面，并且通过Prometheus Server对外提供访问路径。
 
 ### Grafana
+
+- [腾讯技术工程：上手开源数据可视化工具 Grafana](https://view.inews.qq.com/a/20221014A06MAQ00)
 
 - 数据源（Data Source）：支持Graphite, InfluxDB, OpenTSDB, Prometheus, Elasticsearch, CloudWatch的支持
 
@@ -1631,12 +1715,6 @@ sudo mtail --progs /etc/mtail.conf --logs '/var/log/*'
             static_configs:
             - targets: ['127.0.0.1:3903']
         ```
-
-### [nginx-prometheus-exporter：基于mtail对nginx日志监控](https://github.com/nginxinc/nginx-prometheus-exporter)
-
-```sh
-./nginx-prometheus-exporter --nginx.scrape-uri=http://127.0.0.1:8080/stub_status
-```
 
 ## 存储
 
