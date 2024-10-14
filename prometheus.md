@@ -1,64 +1,68 @@
-<!-- vim-markdown-toc GFM -->
+
+<!-- mtoc-start -->
 
 * [Prometheus](#prometheus)
-    * [exporter](#exporter)
-        * [systemd](#systemd)
-        * [node_exporter监控主机信息](#node_exporter监控主机信息)
-        * [redis](#redis)
-        * [mongodb](#mongodb)
-        * [mysql](#mysql)
-        * [nginx](#nginx)
-            * [nginx-prometheus-exporter](#nginx-prometheus-exporter)
-            * [nginx-vts-exporter](#nginx-vts-exporter)
-        * [nvidia](#nvidia)
-        * [github](#github)
-        * [android](#android)
-        * [cadvisor：docker监控](#cadvisordocker监控)
-        * [blackbox_exporter](#blackbox_exporter)
-            * [prometheus集成blackbox_exporter](#prometheus集成blackbox_exporter)
-    * [PromQL](#promql)
-        * [各种方法](#各种方法)
-        * [metrics（指标）类型](#metrics指标类型)
-        * [各种操作符](#各种操作符)
-            * [通过curl在HTTP中使用PromQL](#通过curl在http中使用promql)
-        * [Recoding Rules](#recoding-rules)
-    * [服务发现](#服务发现)
-        * [基于文件的服务发现](#基于文件的服务发现)
-        * [consul](#consul)
-            * [服务注册](#服务注册)
-            * [集成prometheus](#集成prometheus)
-        * [基于dns服务发现](#基于dns服务发现)
-        * [服务发现与relabel_configs](#服务发现与relabel_configs)
-    * [可视化](#可视化)
-        * [Console Template](#console-template)
-        * [Grafana](#grafana)
-            * [dashboard](#dashboard)
-    * [alertmanager告警](#alertmanager告警)
-        * [告警](#告警)
-        * [alertmanager配置文件](#alertmanager配置文件)
-            * [route（路由规则）](#route路由规则)
-            * [receivers（告警接收器）](#receivers告警接收器)
-                * [PrometheusAlert：可以接入alertmanager的国内告警系统](#prometheusalert可以接入alertmanager的国内告警系统)
-                * [gmail邮箱](#gmail邮箱)
-                * [企业微信（失败）](#企业微信失败)
-                * [钉钉dingtalk](#钉钉dingtalk)
-                * [Slack](#slack)
-            * [inhibit_rules](#inhibit_rules)
-            * [silences（临时静默）](#silences临时静默)
-            * [告警模板](#告警模板)
-    * [集群](#集群)
-        * [联邦集群](#联邦集群)
-        * [通过goreman实现集群](#通过goreman实现集群)
-            * [alertmanager](#alertmanager)
-            * [prometheus](#prometheus-1)
-    * [日志监控系统](#日志监控系统)
-        * [mtail](#mtail)
-    * [存储](#存储)
-        * [远程存储](#远程存储)
-    * [prophet：时序数据预测的 Python 库](#prophet时序数据预测的-python-库)
+  * [exporter](#exporter)
+    * [systemd](#systemd)
+    * [node_exporter监控主机信息](#node_exporter监控主机信息)
+    * [redis](#redis)
+    * [mongodb](#mongodb)
+    * [mysql](#mysql)
+      * [爱可生开源社区：技术分享 | mysqld_exporter 收集多个 MySQL 监控避坑](#爱可生开源社区技术分享--mysqld_exporter-收集多个-mysql-监控避坑)
+    * [PostgreSQL](#postgresql)
+    * [nginx](#nginx)
+      * [nginx-prometheus-exporter](#nginx-prometheus-exporter)
+      * [nginx-vts-exporter](#nginx-vts-exporter)
+    * [nvidia](#nvidia)
+    * [github](#github)
+    * [android](#android)
+    * [cadvisor：docker监控](#cadvisordocker监控)
+    * [blackbox_exporter](#blackbox_exporter)
+      * [prometheus集成blackbox_exporter](#prometheus集成blackbox_exporter)
+  * [PromQL](#promql)
+    * [各种方法](#各种方法)
+    * [metrics（指标）类型](#metrics指标类型)
+    * [各种操作符](#各种操作符)
+      * [通过curl在HTTP中使用PromQL](#通过curl在http中使用promql)
+    * [Recoding Rules](#recoding-rules)
+  * [服务发现](#服务发现)
+    * [基于文件的服务发现](#基于文件的服务发现)
+    * [consul](#consul)
+      * [服务注册](#服务注册)
+      * [集成prometheus](#集成prometheus)
+      * [kv存储](#kv存储)
+    * [基于dns服务发现](#基于dns服务发现)
+    * [服务发现与relabel_configs](#服务发现与relabel_configs)
+  * [可视化](#可视化)
+    * [Console Template](#console-template)
+    * [Grafana](#grafana)
+      * [dashboard](#dashboard)
+  * [alertmanager告警](#alertmanager告警)
+    * [告警](#告警)
+    * [alertmanager配置文件](#alertmanager配置文件)
+      * [route（路由规则）](#route路由规则)
+      * [receivers（告警接收器）](#receivers告警接收器)
+        * [PrometheusAlert：可以接入alertmanager的国内告警系统](#prometheusalert可以接入alertmanager的国内告警系统)
+        * [gmail邮箱](#gmail邮箱)
+        * [企业微信（失败）](#企业微信失败)
+        * [钉钉dingtalk](#钉钉dingtalk)
+        * [Slack](#slack)
+      * [inhibit_rules](#inhibit_rules)
+      * [silences（临时静默）](#silences临时静默)
+      * [告警模板](#告警模板)
+  * [集群](#集群)
+    * [联邦集群](#联邦集群)
+    * [通过goreman实现集群](#通过goreman实现集群)
+      * [alertmanager](#alertmanager)
+      * [prometheus](#prometheus-1)
+  * [日志监控系统](#日志监控系统)
+    * [mtail](#mtail)
+  * [存储](#存储)
+    * [远程存储](#远程存储)
+  * [prophet：时序数据预测的 Python 库](#prophet时序数据预测的-python-库)
 * [reference](#reference)
 
-<!-- vim-markdown-toc -->
+<!-- mtoc-end -->
 
 # Prometheus
 
@@ -213,6 +217,8 @@ mongodb_exporter --web.listen-address=:9103 --mongodb.uri=mongodb://127.0.0.1:27
 
 ### [mysql](https://github.com/prometheus/mysqld_exporter)
 
+- [朱小厮的博客：Prometheus + Granafa 构建高大上的MySQL监控平台](https://mp.weixin.qq.com/s/ioqmDrBAUDOjmG4mbkzgtQ)
+
 - root用户运行
 
 ```sql
@@ -250,6 +256,20 @@ mysqld-exporter --config.my-cnf="./mysqld_exporter.cnf"
 | mysql_global_status_slow_queries             | 慢查询次数   | SHOW GLOBAL STATUS LIKE "Slow_queries"              |
 | mysql_global_status_threads_connected        | 当前连接数   | SHOW GLOBAL STATUS LIKE 'Threads_connected'         |
 | mysql_global_status_innodb_buffer_pool_reads | innodb缓冲池 | SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_reads'; |
+
+| granafa模板        | id   |
+|--------------------|------|
+| 主从主群监控       | 7371 |
+| 相关mysql 状态监控 | 7362 |
+| 缓冲池状态         | 7365 |
+
+#### [爱可生开源社区：技术分享 | mysqld_exporter 收集多个 MySQL 监控避坑](https://mp.weixin.qq.com/s?__biz=MzU2NzgwMTg0MA==&mid=2247506179&idx=1&sn=eda8ec4191da9d7bafd94ce7a4f3a7ba&chksm=fc953b9ccbe2b28aa0ce7a66ef7c7fc5d2912b8a69d1083c4255e6dc48317f76e010b20ac850&scene=21#wechat_redirect)
+
+### [PostgreSQL](https://github.com/prometheus-community/postgres_exporter)
+
+- [红石PG：谁是 PostgreSQL 领域的最强监控运维平台？](https://mp.weixin.qq.com/s/EUD3zfhuyesR5RMLbBnvTg)
+
+- [红石PG：自定义 PostgreSQL 的监控指标，原来可以这么轻松！](https://mp.weixin.qq.com/s/HWorMaiQA65Bt0U09HIJZw)
 
 ### nginx
 
@@ -751,11 +771,50 @@ scrape_configs:
 
 ### consul
 
-- Consul是由HashiCorp开发的一个支持多数据中心的分布式服务发现和键值对存储服务的开源软件，被大量应用于基于微服务的软件架构当中。
+- Consul是由HashiCorp开发的一个支持多数据中心的**分布式服务发现和键值对存储服务**的开源软件，被大量应用于基于微服务的软件架构当中。
+
+- 常用的服务发现框架有：zookeeper、 etcd、Consul
+
+- 什么是服务发现？为什么要实现服务发现？
+
+    - 假设有一台 client 想要实现不同的业务，就需要调用接口去访问后端的server。那这样 client 就需要知道后端 server 的网络配置，通常是将 server 的网络配置写到 client 配置文件中
+
+    ![avatar](./Pictures/prometheus/Consul服务发现.avif)
+
+    - 问题：
+        - 后面如果新增后端 server，就需要将新配置写进 client 本地上，导致后期配置文件越来越多，不便于维护
+        - 一旦后端某一服务的网络配置发生变化，需要修改 client 的配置
+        - 一旦后端某一服务出现故障，需要人工剔除配置项
+
+    - 解决方法：需要引入一个中间件来给 client 和 server 之间解耦，client 不需要关心后端 server 的配置，当需要实现某一业务的时候，只需要去服务发现中间件上面去获取到对应 server 的网络配置即可
+
+    ![avatar](./Pictures/prometheus/Consul服务发现1.avif)
+
+- consul 的一些特性：
+
+    - 1.服务发现
+        - Consul 提供了通过 DNS 或者 HTTP 接口的方式来注册服务和发现服务
+        - 一些外部的服务通过 Consul 找到它所依赖的服务
+
+    - 2.健康检查
+
+        - Consul 的 Client 可以提供任意数量的健康检查，既可以与业务相关联（是否返回200 状态码）也可以与本地节点相关联（cpu 使用率等）
+
+    - 3.KV 存储
+
+        - Consul 提供了简单的http接口，可以实现动态配置、功能标记、领袖选举等功能
+
+    - 4.安全服务通信
+
+        - 可以为服务生成和分发 TLS 证书，以便建立 TLS 连接
+
+    - 5.多数据中心
+
+        - consul 集群由多个 server 和 client 组成，所有的服务都可以注册到这些节点上
 
 #### 服务注册
 
-- 在`consul.d`目录下创建`/node_exporter.json`文件
+- 在`/etc/consul.d`目录下创建`node_exporter.json`文件
 ```json
 {
     "service": {
@@ -774,7 +833,7 @@ consul agent -dev -config-dir=/etc/consul.d
 # 查看当前集群中的所有节点
 consul members
 
-# 获取服务列表：
+# 一旦 consul 启动，我们可以通过 HTTP API 方式来查询。获取服务列表
 curl http://localhost:8500/v1/catalog/service/node_exporter
 
 # Consul还提供了内置的DNS服务。解析dns查询
@@ -793,6 +852,53 @@ dig @127.0.0.1 -p 8600 node_exporter.service.consul
 ```
 
 - 不要忘记启动`node_exporter`
+
+#### kv存储
+
+- 通过 kv 存储，可以实现动态配置保存、修改等功能
+
+- 有一台 server 提供 web 服务，它将网络配置信息以键值对形式保存到 consul 上。
+
+    - 当 client 需要去调用这个 web 服务的时候，就去 consul 上面找到相关的 key 然后获取对应的 value
+
+    - 而当 server 的网络配置发生变化时，可以在 consul 上面直接修改 value
+
+- consul的 value 有多种形式（JSON、HCL、XML、YAML）
+
+- 一般我们对 kv 的操作有两种方式：
+
+    - 1.通过命令行来操作（CLI API）。[consul 命令操作 kv 文档](https://developer.hashicorp.com/consul/commands/kv)
+
+        ```sh
+        # 插入kv
+        consul kv put webserver - << EOF
+        ip=1.1.1.1
+        port=80
+        EOF
+
+        # 管道插入
+        echo -e 'ip=1.1.1.1 \nport=80' | consul kv put webserver -
+
+        # 文件插入
+        cat test
+        ip=1.1.1.1
+        port=80
+
+        consul kv put webserver @test
+
+        # 获取kv
+        consul kv get webserver
+        # 获取详情kv
+        consul kv get -detailed webserver
+        # 删除
+        consul kv delete webserver
+        ```
+
+    - 2.通过 consul 提供的 web 界面（HTTP API）来操作
+
+        - key 为 webserver，value 为 ip 和 port，以 YAML 的形式保存
+
+            ![avatar](./Pictures/prometheus/consul的kv存储.avif)
 
 ### 基于dns服务发现
 
