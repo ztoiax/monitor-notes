@@ -8,6 +8,8 @@
     * [redis](#redis)
     * [mongodb](#mongodb)
     * [mysql](#mysql)
+      * [悦专栏：MySQL 监控 第01期：Prometheus+Grafana 监控 MySQL](#悦专栏mysql-监控-第01期prometheusgrafana-监控-mysql)
+      * [MySQL数据库联盟：单个mysqld_exporter监控多个MySQL实例](#mysql数据库联盟单个mysqld_exporter监控多个mysql实例)
       * [爱可生开源社区：技术分享 | mysqld_exporter 收集多个 MySQL 监控避坑](#爱可生开源社区技术分享--mysqld_exporter-收集多个-mysql-监控避坑)
     * [PostgreSQL](#postgresql)
     * [nginx](#nginx)
@@ -61,6 +63,7 @@
     * [远程存储](#远程存储)
   * [prophet：时序数据预测的 Python 库](#prophet时序数据预测的-python-库)
 * [reference](#reference)
+* [未读](#未读)
 
 <!-- mtoc-end -->
 
@@ -262,6 +265,10 @@ mysqld-exporter --config.my-cnf="./mysqld_exporter.cnf"
 | 主从主群监控       | 7371 |
 | 相关mysql 状态监控 | 7362 |
 | 缓冲池状态         | 7365 |
+
+#### [悦专栏：MySQL 监控 第01期：Prometheus+Grafana 监控 MySQL](https://mp.weixin.qq.com/s/Yl7aMFJfDZK-ZQAySDm-2g)
+
+#### [MySQL数据库联盟：单个mysqld_exporter监控多个MySQL实例](https://mp.weixin.qq.com/s/1jrwfcMXwCDKbmvz1klRcA)
 
 #### [爱可生开源社区：技术分享 | mysqld_exporter 收集多个 MySQL 监控避坑](https://mp.weixin.qq.com/s?__biz=MzU2NzgwMTg0MA==&mid=2247506179&idx=1&sn=eda8ec4191da9d7bafd94ce7a4f3a7ba&chksm=fc953b9ccbe2b28aa0ce7a66ef7c7fc5d2912b8a69d1083c4255e6dc48317f76e010b20ac850&scene=21#wechat_redirect)
 
@@ -1100,16 +1107,16 @@ grafana cli plugins install redis-datasource
 
 - [Grafana社区用户分享的Dashboard](https://grafana.com/grafana/dashboards/)
 
-| id号  | 可视化的组件    |
-|-------|-----------------|
-| 8919  | node_exporter   |
-| 1860  | node_exporter   |
-| 7587  | blackbox        |
-| 2583  | mongodb         |
-| 7365  | MySQL Overview  |
-| 14031 | MySQL Dashboard |
-| 12776 | Redis           |
-| 11835 | Redis           |
+| id号  | 可视化的组件       |
+| ----- | ------------------ |
+| 8919  | node_exporter      |
+| 1860  | node_exporter full |
+| 7587  | blackbox           |
+| 2583  | mongodb            |
+| 7365  | MySQL Overview     |
+| 14031 | MySQL Dashboard    |
+| 12776 | Redis              |
+| 11835 | Redis              |
 
 
 ## alertmanager告警
@@ -1987,3 +1994,13 @@ sudo mtail --progs /etc/mtail.conf --logs '/var/log/*'
 
 - [《Prometheus监控技术与实践》配套资料](https://github.com/aiopstack/Prometheus-book)
 - [《prometheus-book》](https://yunlzheng.gitbook.io/prometheus-book/)
+
+# 未读
+
+- [崔亮的博客：prometheus学习笔记](https://m.cuiliangblog.cn/catalog/6854638)
+
+- [云原生运维圈：重塑 Prometheus 核心：揭开 PromQL 的面纱](https://mp.weixin.qq.com/s/dL_NFqPb-b4mCOFirwVRvw)
+
+- [云原生运维圈：重新定义可视化：我的 Grafana 设计之旅](https://mp.weixin.qq.com/s/JKyxdolFrZHpTOukiWOx4w)
+
+- [云原生运维圈：探索 Prometheus Agent + GreptimeDB：轻量级监控的未来](https://mp.weixin.qq.com/s/bR7hi4gVdX_f-clFQWM7Jg)
